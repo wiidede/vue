@@ -11,9 +11,9 @@ let uid = 0
  * directives subscribing to it.
  */
 export default class Dep {
-  static target: ?Watcher;
-  id: number;
-  subs: Array<Watcher>;
+  static target: ?Watcher; // 类的静态变量
+  id: number; // 实例的 id
+  subs: Array<Watcher>; // 实例的 watchers
 
   constructor () {
     this.id = uid++
@@ -29,7 +29,9 @@ export default class Dep {
   }
 
   depend () {
+		// 存在当前的 watcher
     if (Dep.target) {
+			// 在 watcher 中添加 dep
       Dep.target.addDep(this)
     }
   }

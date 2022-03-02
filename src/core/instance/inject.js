@@ -5,6 +5,7 @@ import { warn, hasSymbol } from '../util/index'
 import { defineReactive, toggleObserving } from '../observer/index'
 
 export function initProvide (vm: Component) {
+	// 直接放到实例的 _provided 上
   const provide = vm.$options.provide
   if (provide) {
     vm._provided = typeof provide === 'function'
@@ -13,7 +14,12 @@ export function initProvide (vm: Component) {
   }
 }
 
+/**
+ * 解析 对结果做响应式处理
+ * @param vm
+ */
 export function initInjections (vm: Component) {
+	// 从配置项上解析 inject
   const result = resolveInject(vm.$options.inject, vm)
   if (result) {
     toggleObserving(false)
@@ -29,6 +35,7 @@ export function initInjections (vm: Component) {
           )
         })
       } else {
+				// 解析结果做响应式处理 将 key 代理到实例上, this.key
         defineReactive(vm, key, result[key])
       }
     })
@@ -36,6 +43,15 @@ export function initInjections (vm: Component) {
   }
 }
 
+/**
+ * 解析 inject
+ * @param inject = {
+ *   form: provideKey,
+ *   default: func
+ * }
+ * @param vm
+ * @returns { key: val}
+ */
 export function resolveInject (inject: any, vm: Component): ?Object {
   if (inject) {
     // inject is :any because flow is not smart enough to figure out cached

@@ -130,9 +130,12 @@ export default class Watcher {
     const id = dep.id
     if (!this.newDepIds.has(id)) {
       this.newDepIds.add(id)
+	    // 在 watcher 中添加 dep
       this.newDeps.push(dep)
       if (!this.depIds.has(id)) {
+				// 在 dep 中添加 watcher
         dep.addSub(this)
+	      // 实现了 双向收集
       }
     }
   }

@@ -40,11 +40,15 @@ export class Observer {
   vmCount: number; // number of vms that have this object as root $data
 
   constructor (value: any) {
+		// observer 上记录 value dep vmCount
+	  // TODO vmCount 有什么用? observer 上的 dep 和 key 上的 dep?
     this.value = value
     this.dep = new Dep()
     this.vmCount = 0
     def(value, '__ob__', this)
+	  // 处理数组响应式
     if (Array.isArray(value)) {
+			// 判断是否有 proto
       if (hasProto) {
         protoAugment(value, arrayMethods)
       } else {
@@ -52,6 +56,7 @@ export class Observer {
       }
       this.observeArray(value)
     } else {
+			// 处理对象响应式
       this.walk(value)
     }
   }
@@ -64,6 +69,7 @@ export class Observer {
   walk (obj: Object) {
     const keys = Object.keys(obj)
     for (let i = 0; i < keys.length; i++) {
+			// 对象上的每个 key 执行 defineReactive 方法
       defineReactive(obj, keys[i])
     }
   }
@@ -72,6 +78,7 @@ export class Observer {
    * Observe a list of Array items.
    */
   observeArray (items: Array<any>) {
+		// 遍历数组, 进行响应式处理
     for (let i = 0, l = items.length; i < l; i++) {
       observe(items[i])
     }
@@ -85,6 +92,7 @@ export class Observer {
  * the prototype chain using __proto__
  */
 function protoAugment (target, src: Object) {
+	// 用重写的原型覆盖数组原来的原型
   /* eslint-disable no-proto */
   target.__proto__ = src
   /* eslint-enable no-proto */
@@ -93,6 +101,7 @@ function protoAugment (target, src: Object) {
 /**
  * Augment a target Object or Array by defining
  * hidden properties.
+ * 如果没有原型对象, 直接在 array 上赋值相应的方法
  */
 /* istanbul ignore next */
 function copyAugment (target: Object, src: Object, keys: Array<string>) {
@@ -106,21 +115,25 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
  * Attempt to create an observer instance for a value,
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
+ * 响应式处理
  */
 export function observe (value: any, asRootData: ?boolean): Observer | void {
   if (!isObject(value) || value instanceof VNode) {
     return
   }
   let ob: Observer | void
+	// 如果已经有 __ob__ 表明已经被响应式处理了,直接返回 ob
   if (hasOwn(value, '__ob__') && value.__ob__ instanceof Observer) {
     ob = value.__ob__
   } else if (
+		// 判断是否需要响应式, 需要响应式的值需要是一个对象/数组
     shouldObserve &&
     !isServerRendering() &&
     (Array.isArray(value) || isPlainObject(value)) &&
     Object.isExtensible(value) &&
     !value._isVue
   ) {
+		// 实例化一个 Observer, 进行响应式处理
     ob = new Observer(value)
   }
   if (asRootData && ob) {
@@ -139,9 +152,12 @@ export function defineReactive (
   customSetter?: ?Function,
   shallow?: boolean
 ) {
+	// 实例化一个 dep, 一个 key 对应一个 dep
   const dep = new Dep()
 
+	// 获取属性描述符
   const property = Object.getOwnPropertyDescriptor(obj, key)
+	// 如果 configurable 为 false, 不可配就直接返回
   if (property && property.configurable === false) {
     return
   }
@@ -153,26 +169,37 @@ export function defineReactive (
     val = obj[key]
   }
 
+	// 递归, 处理对象, 也就是说, 这里是先给子属性进行响应式处理的
   let childOb = !shallow && observe(val)
+	// 拦截 obj.key
   Object.defineProperty(obj, key, {
     enumerable: true,
     configurable: true,
     get: function reactiveGetter () {
+			// 先获取值
       const value = getter ? getter.call(obj) : val
+	    // 依赖收集 dep 和 watcher 双向收集
       if (Dep.target) {
         dep.depend()
         if (childOb) {
-          childOb.dep.depend()
+					// 对嵌套对象同样进行依赖收集
+          childOb.dep.depend() // 也就是说, child 上有响应式更新, 会触发这里的 watcher
+	        // TODO 这样是不是说, 当前的 watcher 会存在于 子属性/根属性 上?
           if (Array.isArray(value)) {
+						// 如果嵌套的对象是数组, 处理数组
             dependArray(value)
           }
         }
       }
+			// 返回值
       return value
     },
+	  // 拦截 set
     set: function reactiveSetter (newVal) {
+			// 获取老值
       const value = getter ? getter.call(obj) : val
       /* eslint-disable no-self-compare */
+	    // TODO 自己和自己比较干嘛呢? A: 提交记录表示为了识别 NaN 重新赋值 NaN 会触发响应式
       if (newVal === value || (newVal !== newVal && value !== value)) {
         return
       }
@@ -180,6 +207,7 @@ export function defineReactive (
       if (process.env.NODE_ENV !== 'production' && customSetter) {
         customSetter()
       }
+			// 不相等则更新值
       // #7981: for accessor properties without setter
       if (getter && !setter) return
       if (setter) {
@@ -187,7 +215,9 @@ export function defineReactive (
       } else {
         val = newVal
       }
+			// 对新值做响应式处理
       childOb = !shallow && observe(newVal)
+	    // 通知更新
       dep.notify()
     }
   })
@@ -264,6 +294,7 @@ export function del (target: Array<any> | Object, key: any) {
 /**
  * Collect dependencies on array elements when the array is touched, since
  * we cannot intercept array element access like property getters.
+ * 处理嵌套对象为数组的情况
  */
 function dependArray (value: Array<any>) {
   for (let e, i = 0, l = value.length; i < l; i++) {
