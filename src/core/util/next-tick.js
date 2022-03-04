@@ -10,8 +10,10 @@ export let isUsingMicroTask = false
 const callbacks = []
 let pending = false
 
+// 只允许浏览器异步队列任务中有一个 flushCallbacks
 function flushCallbacks () {
-  pending = false
+  pending = false // pending false 表示下一个 flushCallbacks 可以进入异步任务队列
+	// 清空 callback 数组，并执行数组中的函数（flushSchedulerQueue、用户调用 $nextTick 的回调函数）
   const copies = callbacks.slice(0)
   callbacks.length = 0
   for (let i = 0; i < copies.length; i++) {
@@ -30,7 +32,7 @@ function flushCallbacks () {
 // where microtasks have too high a priority and fire in between supposedly
 // sequential events (e.g. #4521, #6690, which have workarounds)
 // or even between bubbling of the same event (#6566).
-let timerFunc
+let timerFunc // 顺序 Promise.resolve() MutationObserver setImmediate setTimeout
 
 // The nextTick behavior leverages the microtask queue, which can be accessed
 // via either native Promise.then or MutationObserver.
@@ -86,7 +88,9 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
 
 export function nextTick (cb?: Function, ctx?: Object) {
   let _resolve
+	// 王 callbacks 数组中推入回调函数
   callbacks.push(() => {
+		// try cb 因为用户也可以调用这个函数
     if (cb) {
       try {
         cb.call(ctx)
@@ -98,6 +102,7 @@ export function nextTick (cb?: Function, ctx?: Object) {
     }
   })
   if (!pending) {
+		// peding false 执行 timerFunc
     pending = true
     timerFunc()
   }

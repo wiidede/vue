@@ -52,16 +52,17 @@ export default class Watcher {
   ) {
     this.vm = vm
     if (isRenderWatcher) {
-      vm._watcher = this
+      vm._watcher = this // 是否由渲染函数创建的，给 vm._watcher 赋值渲染函数的 watcher
     }
     vm._watchers.push(this)
     // options
+	  // watcher 的选项
     if (options) {
-      this.deep = !!options.deep
-      this.user = !!options.user
-      this.lazy = !!options.lazy
-      this.sync = !!options.sync
-      this.before = options.before
+      this.deep = !!options.deep // 深度
+      this.user = !!options.user // 用户
+      this.lazy = !!options.lazy // 懒执行
+      this.sync = !!options.sync // 同步的?
+      this.before = options.before // TODO 什么before?
     } else {
       this.deep = this.user = this.lazy = this.sync = false
     }
@@ -75,11 +76,12 @@ export default class Watcher {
     this.newDepIds = new Set()
     this.expression = process.env.NODE_ENV !== 'production'
       ? expOrFn.toString()
-      : ''
+      : '' // 开发环境把函数字符串放到 expression 属性上
     // parse expression for getter
     if (typeof expOrFn === 'function') {
       this.getter = expOrFn
     } else {
+			// 处理 expOrFn 为字符串的情况, 如果是字符串, 接解析一下, 变成函数(返回一个表达式的对象)
       this.getter = parsePath(expOrFn)
       if (!this.getter) {
         this.getter = noop
@@ -96,15 +98,29 @@ export default class Watcher {
       : this.get()
   }
 
+
   /**
    * Evaluate the getter, and re-collect dependencies.
+   * 执行 this.getter，并重新收集依赖
+   * this.getter 是实例化 watcher 时传递的第二个参数，一个函数或者字符串，比如：updateComponent 或者 parsePath 返回的函数
+   * 为什么要重新收集依赖？
+   *   因为触发更新说明有响应式数据被更新了，但是被更新的数据虽然已经经过 observe 观察了，但是却没有进行依赖收集，
+   *   所以，在更新页面时，会重新执行一次 render 函数，执行期间会触发读取操作，这时候进行依赖收集
    */
   get () {
+		// 对新值进行依赖收集
+		// Dep.target = this
     pushTarget(this)
     let value
     const vm = this.vm
     try {
+			// 执行实例化 watcher 传进来的第二个参数
+	    // 可能是函数
+	    // 可能是一个 key，用 vm call
+	    // 触发读取操作，进行依赖收集
       value = this.getter.call(vm, vm)
+	    // 执行一遍 getter, 从 getter 中收集依赖,
+	    // getter 的响应式对象, dep 的 subs 会添加当前这个 watcher
     } catch (e) {
       if (this.user) {
         handleError(e, vm, `getter for watcher "${this.expression}"`)
@@ -142,12 +158,14 @@ export default class Watcher {
 
   /**
    * Clean up for dependency collection.
+   * 梳理依赖关系
    */
   cleanupDeps () {
     let i = this.deps.length
     while (i--) {
       const dep = this.deps[i]
       if (!this.newDepIds.has(dep.id)) {
+	      // 如果 旧的 dep 已经不在新的 dep 中了, 在旧的 dep 中, 移除自己(移除相应的 watcher)
         dep.removeSub(this)
       }
     }
@@ -168,10 +186,14 @@ export default class Watcher {
   update () {
     /* istanbul ignore else */
     if (this.lazy) {
-      this.dirty = true
+			// 懒执行 比如 computed
+      this.dirty = true // dirty 为 true，重新计算
     } else if (this.sync) {
+			// 同步执行
+	    // 在 watcher 中加入一个 sync 配置，比如 { sync: true}
       this.run()
     } else {
+			// 将当前 watcher 放入 watcher 队列
       queueWatcher(this)
     }
   }
@@ -180,14 +202,22 @@ export default class Watcher {
    * Scheduler job interface.
    * Will be called by the scheduler.
    */
+	/**
+	 * 由 刷新队列函数 flushSchedulerQueue 调用，如果是同步 watch，则由 this.update 直接调用，完成如下几件事：
+	 *   1、执行实例化 watcher 传递的第二个参数，updateComponent 或者 获取 this.xx 的一个函数(parsePath 返回的函数)
+	 *   2、更新旧值为新值
+	 *   3、执行实例化 watcher 时传递的第三个参数，比如用户 watcher 的回调函数
+	 */
   run () {
     if (this.active) {
+			// 执行 get
       const value = this.get()
-      if (
+      if (// 值不相同 执行 cb
         value !== this.value ||
         // Deep watchers and watchers on Object/Arrays should fire even
         // when the value is the same, because the value may
         // have mutated.
+	      // 即使值相同，深度观察者和 ObjectArrays 上的观察者也应该触发，因为该值可能已经发生了变化。
         isObject(value) ||
         this.deep
       ) {
@@ -195,6 +225,7 @@ export default class Watcher {
         const oldValue = this.value
         this.value = value
         if (this.user) {
+					// 用户 watcher 调用，处理错误
           const info = `callback for watcher "${this.expression}"`
           invokeWithErrorHandling(this.cb, this.vm, [value, oldValue], this.vm, info)
         } else {

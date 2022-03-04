@@ -70,7 +70,7 @@ if (inBrowser && !isIE) {
  */
 function flushSchedulerQueue () {
   currentFlushTimestamp = getNow()
-  flushing = true
+  flushing = true // flushing true 表示 watcher 队列正在被刷新
   let watcher, id
 
   // Sort queue before flush.
@@ -81,18 +81,26 @@ function flushSchedulerQueue () {
   //    user watchers are created before the render watcher)
   // 3. If a component is destroyed during a parent component's watcher run,
   //    its watchers can be skipped.
+	// 在刷新之前对队列进行排序。这可确保：
+	// 1. 组件从父组件更新到子组件。 （因为父组件总是在子组件之前创建）
+	// 2. 组件的用户观察者在其渲染观察者之前运行（因为用户观察者是在渲染观察者之前创建的）
+	// 3. 如果组件在父组件的观察者运行期间被销毁，其观察者可以被跳过。
   queue.sort((a, b) => a.id - b.id)
 
   // do not cache length because more watchers might be pushed
   // as we run existing watchers
-  for (index = 0; index < queue.length; index++) {
+	// 遍历 watcher 队列
+  for (index = 0; index < queue.length; index++) { // TODO 为什么 queue.length 可能变化
+		// 当前 watcher
     watcher = queue[index]
+	  // 执行 before 钩子
     if (watcher.before) {
       watcher.before()
     }
+		// 清空缓存，表示当前 watcher 已经被执行，该 watcher 再次入队就可以进来了
     id = watcher.id
     has[id] = null
-    watcher.run()
+    watcher.run() // 执行 watcher
     // in dev build, check and stop circular updates.
     if (process.env.NODE_ENV !== 'production' && has[id] != null) {
       circular[id] = (circular[id] || 0) + 1
@@ -164,27 +172,33 @@ function callActivatedHooks (queue) {
 export function queueWatcher (watcher: Watcher) {
   const id = watcher.id
   if (has[id] == null) {
-    has[id] = true
+    has[id] = true // 第一次进来置为 true 防止 watcher 重新入队
     if (!flushing) {
+			// TODO 了解 flushing
+			// flushing false 表示当前 watcher 队列没有在被刷新，watcher 直接入队
       queue.push(watcher)
     } else {
+			// watcher 队列正在被刷新
       // if already flushing, splice the watcher based on its id
       // if already past its id, it will be run next immediately.
       let i = queue.length - 1
       while (i > index && queue[i].id > watcher.id) {
         i--
-      }
+      } // 找到 watcher 的顺序，保证 watcher 入队后，队列还是有序的
       queue.splice(i + 1, 0, watcher)
     }
     // queue the flush
     if (!waiting) {
+			// waiting 为 false，表示当前浏览器的异步任务队列中没有 flushSchedulerQueue 函数
       waiting = true
 
       if (process.env.NODE_ENV !== 'production' && !config.async) {
-        flushSchedulerQueue()
+				// 同步执行，直接去刷新 watcher
+	      // 性能就会大打折扣
+        flushSchedulerQueue() // TODO flushSchedulerQueue 什么东西啊
         return
       }
-      nextTick(flushSchedulerQueue)
+      nextTick(flushSchedulerQueue)  // this.$nextTick
     }
   }
 }

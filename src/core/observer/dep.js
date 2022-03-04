@@ -32,6 +32,7 @@ export default class Dep {
 		// 存在当前的 watcher
     if (Dep.target) {
 			// 在 watcher 中添加 dep
+	    // 同时，在添加 watcher 的时候，watcher 也会向 dep 的 subs 添加自己
       Dep.target.addDep(this)
     }
   }
@@ -45,6 +46,7 @@ export default class Dep {
       // order
       subs.sort((a, b) => a.id - b.id)
     }
+		// 执行收集到的 subs，也就是执行 watcher
     for (let i = 0, l = subs.length; i < l; i++) {
       subs[i].update()
     }
