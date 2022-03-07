@@ -90,8 +90,14 @@ function flushSchedulerQueue () {
   // do not cache length because more watchers might be pushed
   // as we run existing watchers
 	// 遍历 watcher 队列
-  for (index = 0; index < queue.length; index++) { // TODO 为什么 queue.length 可能变化
-		// 当前 watcher
+  for (index = 0; index < queue.length; index++) {
+    // TODO 为什么 queue.length 可能变化? 答：引用群友的问题：
+		//    如何出现异步更新己经执行还有执行 queueWatcher 的情况?
+	  // 	  A:如果是一个用户 watcher，即 watch 选项，监听到数据更新，经过异步更新队列的过程，
+	  // 	  最后开始刷新队列，执行 watcher.run -> watcher.get -> 最后执行 watch 选项的回调函数，
+	  // 	  如果回调函数中有更新另一个响应式数据的情况这时候就会触发 setter，然后触发依赖通知更新,
+	  // 	  接着 watcher入队当前 watcher
+	  //    另一位群友： 比如说，嵌套调用 $watch 就会出现这种情况
     watcher = queue[index]
 	  // 执行 before 钩子
     if (watcher.before) {
@@ -122,7 +128,7 @@ function flushSchedulerQueue () {
   const activatedQueue = activatedChildren.slice()
   const updatedQueue = queue.slice()
 
-  resetSchedulerState()
+  resetSchedulerState() // waiting = flushing = false 结束刷新
 
   // call component updated and activated hooks
   callActivatedHooks(activatedQueue)
@@ -149,6 +155,7 @@ function callUpdatedHooks (queue) {
 /**
  * Queue a kept-alive component that was activated during patch.
  * The queue will be processed after the entire tree has been patched.
+ * TODO keep alive?
  */
 export function queueActivatedComponent (vm: Component) {
   // setting _inactive to false here so that a render function can
@@ -174,11 +181,12 @@ export function queueWatcher (watcher: Watcher) {
   if (has[id] == null) {
     has[id] = true // 第一次进来置为 true 防止 watcher 重新入队
     if (!flushing) {
-			// TODO 了解 flushing
+			// TODO 了解 flushing A: flush 就是刷新的意思，表示当前队列在不在刷新
 			// flushing false 表示当前 watcher 队列没有在被刷新，watcher 直接入队
       queue.push(watcher)
     } else {
 			// watcher 队列正在被刷新
+	    // TODO 什么情况下，会到这里？ flushing 的时候会调用这个？ A：这个问题同：为什么 queue.length 可能变化
       // if already flushing, splice the watcher based on its id
       // if already past its id, it will be run next immediately.
       let i = queue.length - 1
@@ -190,12 +198,14 @@ export function queueWatcher (watcher: Watcher) {
     // queue the flush
     if (!waiting) {
 			// waiting 为 false，表示当前浏览器的异步任务队列中没有 flushSchedulerQueue 函数
+	    // TODO 然后呢？ A：这里应该是 prod 环境，flushSchedulerQueue在异步任务中了，不需要再次调用了，
+	    //  当调用到 flushSchedulerQueue，就应该会把 Queue 中的 watcher 都 run 一下
       waiting = true
 
       if (process.env.NODE_ENV !== 'production' && !config.async) {
 				// 同步执行，直接去刷新 watcher
 	      // 性能就会大打折扣
-        flushSchedulerQueue() // TODO flushSchedulerQueue 什么东西啊
+        flushSchedulerQueue() // TODO flushSchedulerQueue 什么东西啊？ A: 应该就是刷新队列，执行 queue 中所有 watcher 的 run
         return
       }
       nextTick(flushSchedulerQueue)  // this.$nextTick

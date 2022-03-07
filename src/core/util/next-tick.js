@@ -32,6 +32,8 @@ function flushCallbacks () {
 // where microtasks have too high a priority and fire in between supposedly
 // sequential events (e.g. #4521, #6690, which have workarounds)
 // or even between bubbling of the same event (#6566).
+
+// 一般就是 .then(flushCallbacks)
 let timerFunc // 顺序 Promise.resolve() MutationObserver setImmediate setTimeout
 
 // The nextTick behavior leverages the microtask queue, which can be accessed
@@ -88,7 +90,7 @@ if (typeof Promise !== 'undefined' && isNative(Promise)) {
 
 export function nextTick (cb?: Function, ctx?: Object) {
   let _resolve
-	// 王 callbacks 数组中推入回调函数
+	// 往 callbacks 数组中推入回调函数
   callbacks.push(() => {
 		// try cb 因为用户也可以调用这个函数
     if (cb) {
