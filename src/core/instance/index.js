@@ -14,10 +14,15 @@ function Vue (options) {
   this._init(options)
 }
 
+// _init
 initMixin(Vue)
+// 处理 $data $props $set $delete $watch
 stateMixin(Vue)
+// 处理 $on $once $off $emit
 eventsMixin(Vue)
+// 处理 _update $destroy $forceUpdate
 lifecycleMixin(Vue)
+// 处理 renderHelper $nextTick _render
 renderMixin(Vue)
 
 export default Vue

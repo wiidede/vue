@@ -60,14 +60,18 @@ export function setCurrentRenderingInstance (vm: Component) {
 
 export function renderMixin (Vue: Class<Component>) {
   // install runtime convenience helpers
+	// 在组件实例上挂载运行时需要的方法
   installRenderHelpers(Vue.prototype)
 
+	// Vue.nextTick()
   Vue.prototype.$nextTick = function (fn: Function) {
     return nextTick(fn, this)
   }
 
+	// 调用 render 得到 vnode
   Vue.prototype._render = function (): VNode {
     const vm: Component = this
+	  // 获取 render 函数 (用户提供或者编译模板生成)
     const { render, _parentVnode } = vm.$options
 
     if (_parentVnode) {
@@ -88,6 +92,7 @@ export function renderMixin (Vue: Class<Component>) {
       // separately from one another. Nested component's render fns are called
       // when parent component is patched.
       currentRenderingInstance = vm
+	    // 调用 render 函数，获取 vnode
       vnode = render.call(vm._renderProxy, vm.$createElement)
     } catch (e) {
       handleError(e, vm, `render`)
@@ -111,8 +116,10 @@ export function renderMixin (Vue: Class<Component>) {
     if (Array.isArray(vnode) && vnode.length === 1) {
       vnode = vnode[0]
     }
+		// 多根节点的异常提示
     // return empty vnode in case the render function errored out
     if (!(vnode instanceof VNode)) {
+			// 渲染函数根节点有多个
       if (process.env.NODE_ENV !== 'production' && Array.isArray(vnode)) {
         warn(
           'Multiple root nodes returned from render function. Render function ' +

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Vue.js example</title>
+  <!-- Delete ".min" for console warnings in development -->
+  <script src="../../dist/vue.js"></script>
+</head>
+<body>
+<!-- template for the modal component -->
+<script type="text/x-template" id="example-template">
+  <div id="example-container">
+    {{ obj.key1 }}
+    {{ obj.key2 }}
+    {{ obj.key3 }}
+  </div>
+</script>
+
+<!-- app -->
+<div id="app">
+  <example-comp></example-comp>
+</div>
+
+<script>
+  // register modal component
+  Vue.component('example-comp', {
+    template: '#example-template',
+    data() {
+      return {
+        obj: {
+          key1: 'key'
+        }
+      }
+    },
+    mounted() {
+      setTimeout(() => {
+        this.obj.key1 = 'key1 >'
+      }, 1000)
+      setTimeout(() => {
+        this.obj.key2 = 'key2 >'
+      }, 2000)
+      setTimeout(() => {
+        this.obj.key1 = 'key1 >>'
+      }, 3000)
+      setTimeout(() => {
+        this.$set(this.obj, 'key3', 'key3 >>')
+      }, 4000)
+      setTimeout(() => {
+        this.obj.key1 = 'key1 >>>'
+      }, 5000)
+    }
+  })
+
+  // start app
+  new Vue({
+    el: '#app',
+    data: {
+
+    }
+  })
+</script>
+</body>
+</html>

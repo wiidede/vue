@@ -409,6 +409,7 @@ export function mergeOptions (
   // Only merged options has the _base property.
 	// 递归合并选项
   if (!child._base) {
+		// 与 mixin 类似，基于一个组件去扩展另一个 Vue.extend
     if (child.extends) {
       parent = mergeOptions(parent, child.extends, vm)
     }
@@ -431,6 +432,7 @@ export function mergeOptions (
     }
   }
   function mergeField (key) {
+		// 选项合并策略
     const strat = strats[key] || defaultStrat
     options[key] = strat(parent[key], child[key], vm, key)
   }

@@ -368,11 +368,16 @@ export function stateMixin (Vue: Class<Component>) {
   // flow somehow has problems with directly declared definition object
   // when using Object.defineProperty, so we have to procedurally build up
   // the object here.
+	// 处理 data 数据，定义 get 方法，访问 this._data
   const dataDef = {}
+	// 处理 props 数据
   dataDef.get = function () { return this._data }
   const propsDef = {}
   propsDef.get = function () { return this._props }
+	// 异常提示
   if (process.env.NODE_ENV !== 'production') {
+		// this.$data = {} or new val ❌
+	  // this.$data.prop = val ✔
     dataDef.set = function () {
       warn(
         'Avoid replacing instance root $data. ' +
@@ -380,16 +385,22 @@ export function stateMixin (Vue: Class<Component>) {
         this
       )
     }
+		// 设置 props 的时候，直接提示是只读的
     propsDef.set = function () {
       warn(`$props is readonly.`, this)
     }
   }
+
+	// 将 $data 和 $props 挂载到 Vue 的原型链上，支持通过 this.$data 和 this.$props 访问
   Object.defineProperty(Vue.prototype, '$data', dataDef)
   Object.defineProperty(Vue.prototype, '$props', propsDef)
 
+	// this.$set 和 this.$delete
+	// Vue.set 和 Vue.delete 的别名
   Vue.prototype.$set = set
   Vue.prototype.$delete = del
 
+	// this.$watch
   Vue.prototype.$watch = function (
     expOrFn: string | Function,
     cb: any,
@@ -406,7 +417,7 @@ export function stateMixin (Vue: Class<Component>) {
 	  // 实例化 watcher
     const watcher = new Watcher(vm, expOrFn, cb, options)
 	  // 如果有 immediate 则立即执行
-	  // TODO immediate 干了什么? deep 在哪?
+	  // TODO immediate 干了什么，为什么要pushTarget? deep 在哪?
     if (options.immediate) {
       const info = `callback for immediate watcher "${watcher.expression}"`
       pushTarget()
