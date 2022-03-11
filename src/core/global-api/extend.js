@@ -6,6 +6,8 @@ import { extend, mergeOptions, validateComponentName } from '../util/index'
 
 /**
  * TODO 看一下与 mixin 的区别
+ *   A: mixin 是混入到xx
+ *   extend 是从xx继承
  * @param Vue
  */
 export function initExtend (Vue: GlobalAPI) {
@@ -81,7 +83,7 @@ export function initExtend (Vue: GlobalAPI) {
     if (name) {
 	    // {
 			// 	 name: 'Comp',
-	    //   components: { Comp: Comp} TODO 感觉不太对吧 Comp 变量是啥
+	    //   components: { Comp: Comp}
 	    // }
       Sub.options.components[name] = Sub
     }

@@ -200,6 +200,10 @@ export function mountComponent (
   // we set this to vm._watcher inside the watcher's constructor
   // since the watcher's initial patch may call $forceUpdate (e.g. inside child
   // component's mounted hook), which relies on vm._watcher being already defined
+	// 我们在 watcher 的构造函数中将其设置为 vm._watcher，因为 watcher 的初始补丁可能会调用 forceUpdate（例如，在子组件的挂载钩子内），
+	// 这依赖于 vm._watcher 已经定义
+	// 为每个 vue 实例创建一个 watcher
+	// TODO expOrFn 为什么是 () => { vm._update(vm._render(), hydrating) }
   new Watcher(vm, updateComponent, noop, {
     before () {
       if (vm._isMounted && !vm._isDestroyed) {

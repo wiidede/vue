@@ -1,7 +1,7 @@
 import Vue from './instance/index'
 import { initGlobalAPI } from './global-api/index'
-import { isServerRendering } from 'core/util/env'
-import { FunctionalRenderContext } from 'core/vdom/create-functional-component'
+import { isServerRendering } from './util'
+import { FunctionalRenderContext } from './vdom/create-functional-component'
 
 initGlobalAPI(Vue)
 
@@ -18,6 +18,7 @@ Object.defineProperty(Vue.prototype, '$ssrContext', {
 
 // expose FunctionalRenderContext for ssr runtime helper installation
 Object.defineProperty(Vue, 'FunctionalRenderContext', {
+	// TODO 函数式组件？
   value: FunctionalRenderContext
 })
 

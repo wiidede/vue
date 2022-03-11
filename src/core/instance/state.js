@@ -79,7 +79,7 @@ function initProps (vm: Component, propsOptions: Object) {
   const keys = vm.$options._propKeys = []
   const isRoot = !vm.$parent
   // root instance props should be converted
-	// TODO root 为什么不要监测
+	// TODO root 为什么不要监测？
   if (!isRoot) {
     toggleObserving(false)
   }
@@ -187,8 +187,8 @@ export function getData (data: Function, vm: Component): any {
 const computedWatcherOptions = { lazy: true }
 
 function initComputed (vm: Component, computed: Object) {
-  // $flow-disable-line
 	// 在实例上定义 computed 的 watcher
+  // $flow-disable-line
   const watchers = vm._computedWatchers = Object.create(null)
   // computed properties are just getters during SSR
   const isSSR = isServerRendering()
@@ -269,9 +269,9 @@ export function defineComputed (
 }
 
 function createComputedGetter (key) {
+	// 需要缓存计算结果的情况
   return function computedGetter () {
 		// computed get: 拿到定义在实例上的 watcher
-	  // TODO watcher 学习完后 会过来看
     const watcher = this._computedWatchers && this._computedWatchers[key]
     if (watcher) {
       if (watcher.dirty) {
@@ -418,6 +418,7 @@ export function stateMixin (Vue: Class<Component>) {
     const watcher = new Watcher(vm, expOrFn, cb, options)
 	  // 如果有 immediate 则立即执行
 	  // TODO immediate 干了什么，为什么要pushTarget? deep 在哪?
+	  //  deep参考 watcher 中 的 traverse()
     if (options.immediate) {
       const info = `callback for immediate watcher "${watcher.expression}"`
       pushTarget()

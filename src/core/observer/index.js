@@ -33,6 +33,7 @@ export function toggleObserving (value: boolean) {
  * object. Once attached, the observer converts the target
  * object's property keys into getter/setters that
  * collect dependencies and dispatch updates.
+ * 附加到每个被观察对象的观察者类。附加后，观察者将目标对象的属性键转换为收集依赖项和调度更新的 getter/setter。
  */
 export class Observer {
   value: any;
@@ -41,9 +42,11 @@ export class Observer {
 
   constructor (value: any) {
 		// observer 上记录 value dep vmCount
-	  // TODO vmCount 有什么用? observer 上的 dep 和 key 上的 dep?
     this.value = value
+	  // TODO observer 上的 dep 和 key 上的 dep?
     this.dep = new Dep()
+	  // TODO vmCount 有什么用?
+	  //  A: 记录不要再根节点上添加或删除属性
     this.vmCount = 0
     def(value, '__ob__', this)
 	  // 处理数组响应式
@@ -115,6 +118,8 @@ function copyAugment (target: Object, src: Object, keys: Array<string>) {
  * Attempt to create an observer instance for a value,
  * returns the new observer if successfully observed,
  * or the existing observer if the value already has one.
+ * 尝试为一个值创建一个观察者实例，如果成功观察到，则返回新的观察者，如果该值已经有一个，则返回现有的观察者。
+ *
  * 响应式处理
  */
 export function observe (value: any, asRootData: ?boolean): Observer | void {
@@ -137,6 +142,7 @@ export function observe (value: any, asRootData: ?boolean): Observer | void {
     ob = new Observer(value)
   }
   if (asRootData && ob) {
+	  // 如果是根节点 记录一下，提示不要在根 $root 上天添加、删除属性
     ob.vmCount++
   }
   return ob

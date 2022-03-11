@@ -62,7 +62,7 @@ export default class Watcher {
       this.user = !!options.user // 用户
       this.lazy = !!options.lazy // 懒执行
       this.sync = !!options.sync // 同步的?
-      this.before = options.before // TODO 什么before?
+      this.before = options.before // TODO 什么before? A: 在 watcher.run() 之前执行的函数
     } else {
       this.deep = this.user = this.lazy = this.sync = false
     }
@@ -128,8 +128,9 @@ export default class Watcher {
         throw e
       }
     } finally {
-      // "touch" every property so they are all tracked as
+      // "touch" every property, so they are all tracked as
       // dependencies for deep watching
+	    // 遍历一遍所有属性，触发 getter 收集依赖
       if (this.deep) {
         traverse(value)
       }
