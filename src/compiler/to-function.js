@@ -22,11 +22,15 @@ export function createCompileToFunctionFn (compile: Function): Function {
   const cache = Object.create(null)
 
   return function compileToFunctions (
+		// 字符串模板
     template: string,
+		// 编译选项
     options?: CompilerOptions,
+		// 组件实例
     vm?: Component
   ): CompiledFunctionResult {
     options = extend({}, options)
+	  // 日志
     const warn = options.warn || baseWarn
     delete options.warn
 
@@ -38,6 +42,9 @@ export function createCompileToFunctionFn (compile: Function): Function {
       } catch (e) {
         if (e.toString().match(/unsafe-eval|CSP/)) {
           warn(
+	          // 看来你是在一个有内容安全策略的环境中使用Vue.js的独立构建，
+	          // 该策略禁止 unsafe-eval。 模板编译器不能在这种环境下工作。
+	          // 可以考虑放宽政策，允许 unsafe-eval，或者将模板预编译成渲染函数。
             'It seems you are using the standalone build of Vue.js in an ' +
             'environment with Content Security Policy that prohibits unsafe-eval. ' +
             'The template compiler cannot work in this environment. Consider ' +
@@ -48,6 +55,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
       }
     }
 
+		// 从缓存中获取编译结果
     // check cache
     const key = options.delimiters
       ? String(options.delimiters) + template
@@ -57,9 +65,11 @@ export function createCompileToFunctionFn (compile: Function): Function {
     }
 
     // compile
+	  // 执行编译函数，检查编译结果
     const compiled = compile(template, options)
 
     // check compilation errors/tips
+	  // 检查编译过程中产生的所有 error 和 tip 并输出
     if (process.env.NODE_ENV !== 'production') {
       if (compiled.errors && compiled.errors.length) {
         if (options.outputSourceRange) {
@@ -87,10 +97,13 @@ export function createCompileToFunctionFn (compile: Function): Function {
       }
     }
 
+		// 编译结果 compiled.render 是一个字符串，是一个可执行函数的字符串形式
     // turn code into functions
     const res = {}
     const fnGenErrors = []
+	  // 执行 new Function(code) 将字符串转换成函数
     res.render = createFunction(compiled.render, fnGenErrors)
+	  // 将静态函数的字符串转化为函数
     res.staticRenderFns = compiled.staticRenderFns.map(code => {
       return createFunction(code, fnGenErrors)
     })
@@ -98,6 +111,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
     // check function generation errors.
     // this should only happen if there is a bug in the compiler itself.
     // mostly for codegen development use
+	  // 检查函数生成错误。只有在编译器本身存在错误时才会发生这种情况。主要用于代码生成开发使用
     /* istanbul ignore if */
     if (process.env.NODE_ENV !== 'production') {
       if ((!compiled.errors || !compiled.errors.length) && fnGenErrors.length) {
@@ -109,6 +123,7 @@ export function createCompileToFunctionFn (compile: Function): Function {
       }
     }
 
+		// 将编译结果缓存 并返回
     return (cache[key] = res)
   }
 }

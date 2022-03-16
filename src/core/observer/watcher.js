@@ -130,7 +130,7 @@ export default class Watcher {
     } finally {
       // "touch" every property, so they are all tracked as
       // dependencies for deep watching
-	    // 遍历一遍所有属性，触发 getter 收集依赖
+	    // 遍历一遍所有属性，触发 getter 收集依赖 （traverse - 遍历）
       if (this.deep) {
         traverse(value)
       }

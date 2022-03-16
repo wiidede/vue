@@ -68,6 +68,7 @@ export function eventsMixin (Vue: Class<Component>) {
       // instead of a hash lookup
 	    // hook开头
       if (hookRE.test(event)) {
+				// hook event 设置 _hasHookEvent
         vm._hasHookEvent = true
       }
     }

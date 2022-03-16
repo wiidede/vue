@@ -193,6 +193,7 @@ export function mountComponent (
 		// 更新组件
     updateComponent = () => {
 			// update render
+	    // _render 得到 vdom，并将 vnode 传递给 _update，接下来就是 patch 阶段
       vm._update(vm._render(), hydrating)
     }
   }
@@ -345,16 +346,23 @@ export function deactivateChildComponent (vm: Component, direct?: boolean) {
 }
 
 export function callHook (vm: Component, hook: string) {
+	// TODO 为什么要停止依赖收集呢？
   // #7573 disable dep collection when invoking lifecycle hooks
   pushTarget()
+	// 从 options 上获取声明周期函数
   const handlers = vm.$options[hook]
   const info = `${hook} hook`
   if (handlers) {
     for (let i = 0, j = handlers.length; i < j; i++) {
+			// 调用
       invokeWithErrorHandling(handlers[i], vm, null, vm, info)
     }
   }
+	// hook event
+
   if (vm._hasHookEvent) {
+		// 通过 $emit 方法触发 hook:mounted 事件
+	  // 执行对应的函数
     vm.$emit('hook:' + hook)
   }
   popTarget()
