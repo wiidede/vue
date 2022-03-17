@@ -24,6 +24,7 @@ import {
 } from 'compiler/parser/index'
 
 function preTransformNode (el: ASTElement, options: CompilerOptions) {
+	// 处理 input 标签
   if (el.tag === 'input') {
     const map = el.attrsMap
     if (!map['v-model']) {

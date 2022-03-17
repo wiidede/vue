@@ -65,6 +65,7 @@ export function parseHTML (html, options) {
       let textEnd = html.indexOf('<')
       if (textEnd === 0) {
         // Comment:
+	      // 处理注释标签 <!-- -->
         if (comment.test(html)) {
           const commentEnd = html.indexOf('-->')
 
@@ -72,11 +73,13 @@ export function parseHTML (html, options) {
             if (options.shouldKeepComment) {
               options.comment(html.substring(4, commentEnd), index, index + commentEnd + 3)
             }
+						// 处理掉 已经处理的内容（substring）
             advance(commentEnd + 3)
             continue
           }
         }
 
+				// 处理条件注释
         // http://en.wikipedia.org/wiki/Conditional_comment#Downlevel-revealed_conditional_comment
         if (conditionalComment.test(html)) {
           const conditionalEnd = html.indexOf(']>')
@@ -87,12 +90,15 @@ export function parseHTML (html, options) {
           }
         }
 
+				// 处理 <!DOCTYPE html>
         // Doctype:
         const doctypeMatch = html.match(doctype)
         if (doctypeMatch) {
           advance(doctypeMatch[0].length)
           continue
         }
+
+				// 重点
 
         // End tag:
         const endTagMatch = html.match(endTag)
@@ -104,6 +110,11 @@ export function parseHTML (html, options) {
         }
 
         // Start tag:
+	      //       const match = {
+	      //         tagName: ,
+	      //         attrs: ,
+	      //         start:
+	      //       }
         const startTagMatch = parseStartTag()
         if (startTagMatch) {
           handleStartTag(startTagMatch)
@@ -188,6 +199,7 @@ export function parseHTML (html, options) {
     const start = html.match(startTagOpen)
     if (start) {
       const match = {
+				// 标签名
         tagName: start[1],
         attrs: [],
         start: index
@@ -195,6 +207,7 @@ export function parseHTML (html, options) {
       advance(start[0].length)
       let end, attr
       while (!(end = html.match(startTagClose)) && (attr = html.match(dynamicArgAttribute) || html.match(attribute))) {
+				// 将属性放到 attrs 数组中
         attr.start = index
         advance(attr[0].length)
         attr.end = index
@@ -222,10 +235,12 @@ export function parseHTML (html, options) {
       }
     }
 
+		// 自闭合标签
     const unary = isUnaryTag(tagName) || !!unarySlash
 
     const l = match.attrs.length
     const attrs = new Array(l)
+	  // 属性数组
     for (let i = 0; i < l; i++) {
       const args = match.attrs[i]
       const value = args[3] || args[4] || args[5] || ''
@@ -243,6 +258,7 @@ export function parseHTML (html, options) {
     }
 
     if (!unary) {
+			// 非自闭合标签
       stack.push({ tag: tagName, lowerCasedTag: tagName.toLowerCase(), attrs: attrs, start: match.start, end: match.end })
       lastTag = tagName
     }

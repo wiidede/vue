@@ -5,7 +5,7 @@ import { parseHTML } from './html-parser'
 import { parseText } from './text-parser'
 import { parseFilters } from './filter-parser'
 import { genAssignmentCode } from '../directives/model'
-import { extend, cached, no, camelize, hyphenate } from 'shared/util'
+import { extend, cached, no, camelize, hyphenate } from '../../shared/util'
 import { isIE, isEdge, isServerRendering } from 'core/util/env'
 
 import {
@@ -65,27 +65,99 @@ export function createASTElement (
   return {
     type: 1,
     tag,
-    attrsList: attrs,
-    attrsMap: makeAttrsMap(attrs),
+    attrsList: attrs, // 属性数组
+    attrsMap: makeAttrsMap(attrs), // Map 形式 {attrName, attrValue}
     rawAttrsMap: {},
+	  // 标记父元素
     parent,
+	  // 存放所有的子元素
     children: []
   }
 }
 
+
+/*
+const element = {
+	type: 1,
+	tag,
+	attrsList: [{ name: attrName, value: attrVal, start, end }],
+	attrsMap: { attrName: attrVal, },
+	rawAttrsMap: { attrName: attrVal, type: checkbox },
+	// v-if
+	ifConditions: [{ exp, block }],
+	// v-for
+	for: iterator,
+	alias: 别名,
+	// :key
+	key: xx,
+	// ref
+	ref: xx,
+	refInFor: boolean,
+	// 插槽
+	slotTarget: slotName,
+	slotTargetDynamic: boolean,
+	slotScope: 作用域插槽的表达式,
+	scopeSlot: {
+		name: {
+			slotTarget: slotName,
+			slotTargetDynamic: boolean,
+			children: {
+				parent: container,
+				otherProperty,
+			}
+		},
+		slotScope: 作用域插槽的表达式,
+	},
+	slotName: xx,
+	// 动态组件
+	component: compName,
+	inlineTemplate: boolean,
+	// class
+	staticClass: className,
+	classBinding: xx,
+	// style
+	staticStyle: xx,
+	styleBinding: xx,
+	// attr
+	hasBindings: boolean,
+	nativeEvents: {同 evetns},
+	events: {
+		name: [{ value, dynamic, start, end, modifiers }]
+	},
+	props: [{ name, value, dynamic, start, end }],
+	dynamicAttrs: [同 attrs],
+	attrs: [{ name, value, dynamic, start, end }],
+	directives: [{ name, rawName, value, arg, isDynamicArg, modifiers, start, end }],
+	// v-pre
+	pre: true,
+	// v-once
+	once: true,
+	parent,
+	children: [],
+	plain: boolean,
+}
+*/
+
+
 /**
  * Convert HTML string to AST.
  * 解析部分
+ *
  */
 export function parse (
   template: string,
   options: CompilerOptions
 ): ASTElement | void {
+	//日志
   warn = options.warn || baseWarn
 
+	// 平台 pre 标签
   platformIsPreTag = options.isPreTag || no
+	// 平台 必须使用的 prop 属性
   platformMustUseProp = options.mustUseProp || no
+	// 平台 命名空间
   platformGetTagNamespace = options.getTagNamespace || no
+	// 保留标签
   const isReservedTag = options.isReservedTag || no
   maybeComponent = (el: ASTElement) => !!(
     el.component ||
@@ -93,16 +165,22 @@ export function parse (
     el.attrsMap['v-bind:is'] ||
     !(el.attrsMap.is ? isReservedTag(el.attrsMap.is) : isReservedTag(el.tag))
   )
+
+	// 三个数组 每个元素都是一个元素，分别 style class model 三个模块中导出的
   transforms = pluckModuleFunction(options.modules, 'transformNode')
   preTransforms = pluckModuleFunction(options.modules, 'preTransformNode')
   postTransforms = pluckModuleFunction(options.modules, 'postTransformNode')
 
+	// 界定符
   delimiters = options.delimiters
 
+	// 解析中间结果都放在这里
   const stack = []
   const preserveWhitespace = options.preserveWhitespace !== false
   const whitespaceOption = options.whitespace
+	// 最终返回的 ast 对象
   let root
+	// 记录当前元素的父元素
   let currentParent
   let inVPre = false
   let inPre = false
@@ -215,6 +293,15 @@ export function parse (
     shouldDecodeNewlinesForHref: options.shouldDecodeNewlinesForHref,
     shouldKeepComment: options.comments,
     outputSourceRange: options.outputSourceRange,
+
+	  /**
+	   *
+	   * @param tag 标签名
+	   * @param attrs 属性数组
+	   * @param unary 是否为自闭合标签
+	   * @param start 标签的开始索引位置
+	   * @param end 结束索引的位置
+	   */
     start (tag, attrs, unary, start, end) {
       // check namespace.
       // inherit parent ns if there is one
@@ -226,6 +313,7 @@ export function parse (
         attrs = guardIESVGBug(attrs)
       }
 
+			// 生成当前标签的 ast 对象
       let element: ASTElement = createASTElement(tag, attrs, currentParent)
       if (ns) {
         element.ns = ns
@@ -384,6 +472,8 @@ export function parse (
         }
       }
     },
+
+	  //处理注释内容
     comment (text: string, start, end) {
       // adding anything as a sibling to the root node is forbidden
       // comments should still be allowed, but ignored
