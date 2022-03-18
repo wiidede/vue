@@ -9,6 +9,13 @@ import {
   formatComponentName
 } from 'core/util/index'
 
+/**
+ * 提取 props[key] 得到 res[key] = val
+ * @param data 属性对象
+ * @param Ctor 构造函数
+ * @param tag 标签
+ * @returns {{}}
+ */
 export function extractPropsFromVNodeData (
   data: VNodeData,
   Ctor: Class<Component>,
@@ -17,6 +24,7 @@ export function extractPropsFromVNodeData (
   // we are only extracting raw values here.
   // validation and default values are handled in the child
   // component itself.
+	// 我们在这里只提取原始值。验证和默认值在子组件本身中处理。
   const propOptions = Ctor.options.props
   if (isUndef(propOptions)) {
     return
@@ -24,6 +32,7 @@ export function extractPropsFromVNodeData (
   const res = {}
   const { attrs, props } = data
   if (isDef(attrs) || isDef(props)) {
+		// 遍历 props 配置项
     for (const key in propOptions) {
       const altKey = hyphenate(key)
       if (process.env.NODE_ENV !== 'production') {
@@ -42,6 +51,7 @@ export function extractPropsFromVNodeData (
           )
         }
       }
+			// 从组件的属性对象上，获取组件 props 指定的值
       checkProp(res, props, key, altKey, true) ||
       checkProp(res, attrs, key, altKey, false)
     }

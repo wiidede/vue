@@ -102,14 +102,17 @@ export function createFunctionalComponent (
   const props = {}
   const propOptions = options.props
   if (isDef(propOptions)) {
+		// 遍历 props
     for (const key in propOptions) {
       props[key] = validateProp(key, propOptions, propsData || emptyObject)
     }
   } else {
+		// 没有提供 props 配置
     if (isDef(data.attrs)) mergeProps(props, data.attrs)
     if (isDef(data.props)) mergeProps(props, data.props)
   }
 
+	// 生成函数式组件渲染上下文
   const renderContext = new FunctionalRenderContext(
     data,
     props,
@@ -118,6 +121,7 @@ export function createFunctionalComponent (
     Ctor
   )
 
+	// 生成 vnode
   const vnode = options.render.call(null, renderContext._c, renderContext)
 
   if (vnode instanceof VNode) {

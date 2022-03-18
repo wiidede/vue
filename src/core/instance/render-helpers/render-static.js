@@ -2,6 +2,7 @@
 
 /**
  * Runtime helper for rendering static trees.
+ * 静态树的渲染函数，从 staticRenderFns 找到
  */
 export function renderStatic (
   index: number,
@@ -20,6 +21,7 @@ export function renderStatic (
     null,
     this // for render fns generated for functional component templates
   )
+	// 对 vnode 做静态标记
   markStatic(tree, `__static__${index}`, false)
   return tree
 }
@@ -53,6 +55,7 @@ function markStatic (
   }
 }
 
+// 标记静态节点
 function markStaticNode (node, key, isOnce) {
   node.isStatic = true
   node.key = key
