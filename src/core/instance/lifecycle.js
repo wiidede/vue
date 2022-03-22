@@ -59,6 +59,7 @@ export function lifecycleMixin (Vue: Class<Component>) {
   Vue.prototype._update = function (vnode: VNode, hydrating?: boolean) {
 		// 组件初次渲染和更新的入口
     const vm: Component = this
+	  // 记录老的 el 和 vnode
     const prevEl = vm.$el
     const prevVnode = vm._vnode
     const restoreActiveInstance = setActiveInstance(vm)
@@ -67,9 +68,11 @@ export function lifecycleMixin (Vue: Class<Component>) {
     // based on the rendering backend used.
 	  // 进入 patch 阶段
     if (!prevVnode) {
+			// 老的 vnode 不存在，说明是首次渲染
       // initial render
       vm.$el = vm.__patch__(vm.$el, vnode, hydrating, false /* removeOnly */)
     } else {
+			// 老的 vnode 存在，即为后续更新
       // updates
       vm.$el = vm.__patch__(prevVnode, vnode)
     }
